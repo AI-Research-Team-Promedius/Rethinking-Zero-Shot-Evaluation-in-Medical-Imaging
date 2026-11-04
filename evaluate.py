@@ -12,9 +12,14 @@ The checkpoint is a state dict of the OpenAI CLIP / CheXzero architecture (optio
 "model" key). The architecture is read from the state dict. Extra keys (e.g. heads used only
 in training) are ignored and listed; a missing CLIP key is an error.
 Several --checkpoint values are averaged (ensemble of predicted probabilities).
+
+Checkpoints are loaded with torch.load(weights_only=True), which accepts tensors only. Files that
+also pickle other Python objects are refused unless --trust_checkpoint is given, because
+unpickling an untrusted file can execute arbitrary code.
 """
 import argparse
 import json
+import pickle
 from pathlib import Path
 
 import h5py
@@ -60,8 +65,19 @@ def clip_params_from_state_dict(sd):
     )
 
 
-def load_model(path, device):
-    ckpt = torch.load(path, map_location="cpu")
+def load_model(path, device, trust_checkpoint=False):
+    # weights_only=True refuses pickled Python objects, so a malicious file cannot run code.
+    if trust_checkpoint:
+        ckpt = torch.load(path, map_location="cpu", weights_only=False)
+    else:
+        try:
+            ckpt = torch.load(path, map_location="cpu", weights_only=True)
+        except pickle.UnpicklingError as e:
+            raise SystemExit(
+                f"{path}: contains pickled objects other than tensors, so it was not loaded "
+                f"({str(e).splitlines()[-1][:120]}).\n"
+                "Loading it can execute arbitrary code. If you created this file or fully trust "
+                "its source, rerun with --trust_checkpoint, or re-save only the state dict.")
     sd = ckpt["model"] if isinstance(ckpt, dict) and "model" in ckpt else ckpt
     sd = {k[len("module."):] if k.startswith("module.") else k: v for k, v in sd.items()}
     model = CLIP(**clip_params_from_state_dict(sd))
@@ -130,6 +146,8 @@ def main():
     p.add_argument("--out_dir", help="write predictions.npy and auroc.json here")
     p.add_argument("--batch_size", type=int, default=64)
     p.add_argument("--num_workers", type=int, default=4)
+    p.add_argument("--trust_checkpoint", action="store_true",
+                   help="allow full pickle loading (can execute code; only for files you trust)")
     args = p.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -138,7 +156,7 @@ def main():
 
     preds = []
     for path in args.checkpoint:
-        model = load_model(path, device)
+        model = load_model(path, device, args.trust_checkpoint)
         ds = H5Images(args.images, model.visual.input_resolution)
         if len(ds) != len(y_true):
             raise SystemExit(f"{args.images} has {len(ds)} images but {args.labels} has {len(y_true)} rows")

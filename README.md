@@ -105,7 +105,13 @@ print(ours.sort_values("dicom_id").reset_index(drop=True)
 `evaluate.py` accepts a state dict of the OpenAI CLIP / CheXzero architecture (ViT or ResNet,
 optionally under a `"model"` key) and reads the architecture from the weights. Keys that are not
 part of CLIP, such as training-only heads, are ignored and listed. Pass several `--checkpoint`
-paths to average their predictions. Use `--task cls28` with the `cls28_test` files to evaluate
+paths to average their predictions.
+
+Checkpoints are loaded with `torch.load(weights_only=True)`, which reads tensors only. A file
+that also pickles other objects (optimizer state, numpy scalars) is refused, because unpickling
+an untrusted file can execute code. Re-save just the state dict
+(`torch.save(model.state_dict(), "model.pt")`), or pass `--trust_checkpoint` for a file you
+trust. Use `--task cls28` with the `cls28_test` files to evaluate
 the seen classes.
 
 ## Citation
