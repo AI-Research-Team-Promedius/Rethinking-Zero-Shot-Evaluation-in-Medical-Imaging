@@ -1,4 +1,6 @@
-# PALETTE: label-exclusive zero-shot evaluation for chest X-ray models
+# PALETTE
+
+**P**rotocol for **A**ssessing **L**abel-**E**xclusive zero-sho**T** **T**esting in m**E**dical imaging
 
 Code for the PALETTE evaluation protocol from *Rethinking Zero-Shot Evaluation in Medical
 Imaging*.
