@@ -1,6 +1,6 @@
 # PALETTE
 
-**P**rotocol for **A**ssessing **L**abel-**E**xclusive zero-sho**T** **T**esting in m**E**dical imaging
+## **P**rotocol for **A**ssessing **L**abel-**E**xclusive zero-sho**T** **T**esting in m**E**dical imaging
 
 Code for the PALETTE evaluation protocol from *Rethinking Zero-Shot Evaluation in Medical
 Imaging*.
