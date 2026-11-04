@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+# data and outputs: never commit PhysioNet-derived data, images, reports or predictions
+data/
+results/
+*.h5
+*.npy
+*.pt
+*.pth
+*.pth.tar
+TEXT_EXPOSURE.md
+text_exposure.json
